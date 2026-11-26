@@ -136,7 +136,7 @@ class LiteroticaPlugin implements Plugin.PluginBase {
   name = 'Literotica';
   icon = 'src/en/literotica/icon.png';
   site = SITE;
-  version = '1.0.0';
+  version = '1.0.1';
 
   pluginSettings = {
     chapterOrder: {
@@ -152,7 +152,8 @@ class LiteroticaPlugin implements Plugin.PluginBase {
 
   filters = {
     tag: {
-      label: 'Tag (e.g. romance, cheating, stockings)',
+      label:
+        'Tags, comma separated — stories must have all (e.g. cheating, bdsm)',
       value: 'romance',
       type: FilterTypes.TextInput,
     },
@@ -202,11 +203,15 @@ class LiteroticaPlugin implements Plugin.PluginBase {
       filters,
     }: Plugin.PopularNovelsOptions<typeof this.filters>,
   ): Promise<Plugin.NovelItem[]> {
-    const tag = (filters?.tag?.value || 'romance')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-');
-    const params: string[] = [];
+    // "cheating, high heels" -> /cheating/?tag[]=high%20heels (all must match).
+    // Multi-word tags keep their space; the site's hyphenated slug is a
+    // different, much smaller tag.
+    const tags = (filters?.tag?.value || 'romance')
+      .split(',')
+      .map(t => t.trim().toLowerCase().replace(/\s+/g, ' '))
+      .filter(Boolean);
+    const tag = tags.shift() || 'romance';
+    const params = tags.map(t => 'tag%5B%5D=' + encodeURIComponent(t));
     const sortBy = showLatestNovels ? '' : filters?.sortBy?.value || '';
     if (sortBy) params.push('sort_by=' + sortBy);
     if (filters?.period?.value) params.push('period=' + filters.period.value);
