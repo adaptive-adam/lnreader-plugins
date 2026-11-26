@@ -10,6 +10,42 @@ import { storage } from '@libs/storage';
 
 const SITE = 'https://www.literotica.com/';
 
+// [slug, label] as used in tags.literotica.com/<slug>-category-tags/<tag>/
+const CATEGORIES = [
+  ['anal', 'Anal'],
+  ['audio', 'Audio'],
+  ['bdsm', 'BDSM'],
+  ['chain-stories', 'Chain Stories'],
+  ['crossdressing', 'Crossdressing'],
+  ['erotic-couplings', 'Erotic Couplings'],
+  ['erotic-horror', 'Erotic Horror'],
+  ['exhibitionist-voyeur', 'Exhibitionist & Voyeur'],
+  ['fan-fiction-celebrities', 'Fan Fiction & Celebrities'],
+  ['fetish', 'Fetish'],
+  ['first-time', 'First Time'],
+  ['gay-male', 'Gay Male'],
+  ['group-sex', 'Group Sex'],
+  ['how-to', 'How To'],
+  ['humor-satire', 'Humor & Satire'],
+  ['illustrated', 'Illustrated'],
+  ['interracial-love', 'Interracial Love'],
+  ['lesbian-sex', 'Lesbian Sex'],
+  ['letters-transcripts', 'Letters & Transcripts'],
+  ['loving-wives', 'Loving Wives'],
+  ['mature', 'Mature'],
+  ['mind-control', 'Mind Control'],
+  ['non-erotic', 'Non-Erotic'],
+  ['nonhuman', 'NonHuman'],
+  ['novels-and-novellas', 'Novels and Novellas'],
+  ['reluctance-nonconsent', 'Reluctance/NonConsent'],
+  ['reviews-essays', 'Reviews & Essays'],
+  ['romance', 'Romance'],
+  ['sci-fi-fantasy', 'Sci-Fi & Fantasy'],
+  ['taboo-incest', 'Taboo/Incest'],
+  ['toys-masturbation', 'Toys & Masturbation'],
+  ['transgender', 'Transgender'],
+];
+
 const STORY_RE = /\/s\/([^/?#"]+)/;
 const SERIES_RE = /\/series\/se\/(\d+)/;
 
@@ -136,7 +172,7 @@ class LiteroticaPlugin implements Plugin.PluginBase {
   name = 'Literotica';
   icon = 'src/en/literotica/icon.png';
   site = SITE;
-  version = '1.0.1';
+  version = '1.1.0';
 
   pluginSettings = {
     chapterOrder: {
@@ -156,6 +192,14 @@ class LiteroticaPlugin implements Plugin.PluginBase {
         'Tags, comma separated — stories must have all (e.g. cheating, bdsm)',
       value: 'romance',
       type: FilterTypes.TextInput,
+    },
+    category: {
+      label: 'Category',
+      value: '',
+      type: FilterTypes.Picker,
+      options: [{ label: 'All categories', value: '' }].concat(
+        CATEGORIES.map(([value, label]) => ({ label, value })),
+      ),
     },
     sortBy: {
       label: 'Sort by',
@@ -216,8 +260,10 @@ class LiteroticaPlugin implements Plugin.PluginBase {
     if (sortBy) params.push('sort_by=' + sortBy);
     if (filters?.period?.value) params.push('period=' + filters.period.value);
     if (pageNo > 1) params.push('page=' + pageNo);
+    const category = filters?.category?.value;
     const url =
       'https://tags.literotica.com/' +
+      (category ? category + '-category-tags/' : '') +
       encodeURIComponent(tag) +
       '/' +
       (params.length ? '?' + params.join('&') : '');
